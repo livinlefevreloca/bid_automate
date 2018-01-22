@@ -3,13 +3,14 @@
 
 import openpyxl, shutil, os
 
-
+#Paths that will be used 
 BID_SHEET_PATH = "//COMMSHARE2/Shared/aerotb$/0ABSMAIN/AERO_QUOTE_NUMBERS"
 PROJECTS_PATH = "//COMMSHARE2/Shared/aerotb$/0ABSMAIN/1Projects"
 FOLDER_TEMPLATE_PATH = "//COMMSHARE2/Shared/aerotb$/0ABSMAIN/0JOB_FOLDER_TEMPLATES/SU&CxA&TAB_Template"
 PROPOSAL_PATH = "//COMMSHARE2/Shared/aerotb$/AeroServer/Lefevre/P-YYMMDD-PROJECT_NAME-CUSTOMER-(AL)"
 
 def get_bid_data():
+    #pull the data needed to create the folder and fill out the proposal summary sheet
     bid_sheet = openpyxl.load_workbook('AERO_QUOTE_NUMBERS')
     bids = bid_sheet.sheet['2018']
     last_entry = bids.get_highest_row()
@@ -20,6 +21,7 @@ def get_bid_data():
     return data
     
 def create_new_bid_folder(project_name, sub_projet_name):
+    #create new folder in the proper letter folder and make the folder with the project name in that folder
     folder = project_name[0]
     if str.isdigit(folder):
         folder = '1Numbers'
@@ -29,10 +31,11 @@ def create_new_bid_folder(project_name, sub_projet_name):
     p_name = '_'.join(project_name.split(' '))
     sp_name = '_'.join(sub_projet_name.split(' '))
     project_path = os.path.join(folder_path, p_name)
-    sub_project_path = os.path.join(folder_path, sp_name)
+    sub_project_path = os.path.join(project_path, sp_name)
     try:
         os.mkdir(project_path)
     except OSError as e:
+        #if the folder exisits use the sub project name within the existing project folder
         if os.path.isdir(folder_path):
             print('folder already exisits using creating address sub projet folder')
             os.mkdir(sub_project_path)
@@ -43,9 +46,11 @@ def create_new_bid_folder(project_name, sub_projet_name):
     return project_path
 
 def copy_folder_temp(proj_path):
+    # copy the folder tree template
     shutil.copytree(FOLDER_TEMPLATE_PATH, proj_path)
         
 def copy_proposal_sheet(proj_path, proj_name, cust_name, date):
+    #create the proposal within the new project folder and rename it correctly
     quotes_path = os.path.join(proj_path, 'Quotes')
     shutil.copy(PROPOSAL_PATH, quotes_path )
     date_str = arrange_date(date)
@@ -61,6 +66,7 @@ def copy_proposal_sheet(proj_path, proj_name, cust_name, date):
         
     
 def arrange_date(date_string):
+    #rearrange the date string for the fiile name format
     date_params = date_string.split('/')
     date_params.reverse()
     new_date_str = ''.join(date_params)
@@ -68,6 +74,7 @@ def arrange_date(date_string):
     
     
 def fill_prop_data(proposal_path, proj_name, cust_name, date, proj_address, sub_project_name, quote_num):
+    # fill the data taken from the bid sheet into the proposal sheet
     proposal = openpyxl.load_workbook(proposal_path)
     summary = proposal.sheet('Summary')
     summary.cell('A1').value = proj_name
